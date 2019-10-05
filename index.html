@@ -7,11 +7,11 @@
   <title>Blank page</title>
   <style>
     html,
-    body,
-    canvas {
+    body {
       margin: 0;
       padding: 0;
       overflow: hidden;
+      transition: opacity 0.5s;
     }
 
     pre {
@@ -20,6 +20,7 @@
 
     span {
       color: #444;
+      transition: background-color 1s;
     }
 
     .unselectable {
@@ -39,15 +40,26 @@
     .interactive.beacon {
       background-color: orange;
     }
+
+    .invisible {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+
+    #powers-container {
+      transition: opacity 2s;
+    }
   </style>
 </head>
 <body>
   <div id="content">
     <pre id="game-pre" class="unselectable"></pre>
-    <h2>Powers</h2>
-    <ol>
-      <li><button id="power-1-button">Remove all pipes</button></li>
-    </ol>
+    <div id="powers-container" class="invisible">
+      <h2>Powers</h2>
+      <ol>
+        <li><button id="power-1-button">Remove all pipes</button></li>
+      </ol>
+    </div>
   </div>
   <script src="vendors.app.bundle.js"></script>
   <script src="app.bundle.js"></script>

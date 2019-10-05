@@ -442,6 +442,12 @@ function destroyAndRevealBeacons(beaconNum: number): void {
       }
     }
   }
+  // Extra code to make the powers container appear
+  const powersContainer = document.getElementById('powers-container');
+  if (powersContainer.classList.contains('invisible')) {
+    powersContainer.classList.remove('invisible');
+    powersContainer.scrollIntoView({behavior: 'smooth'});
+  }
 }
 
 /** Power: remove all pipes from the map */
