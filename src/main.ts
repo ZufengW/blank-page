@@ -1,4 +1,4 @@
-import { gameMap, updateMap } from './map';
+import { gameMap, removeAllPipes, updateMap } from './map';
 
 console.log('hello world');
 
@@ -17,4 +17,8 @@ document.addEventListener('click', () => {
   }
   mapPre.style.opacity = String(pageOpacity);
   // Optionally remove the listener when reached 1
+});
+
+document.getElementById('power-1-button').addEventListener('click', () => {
+  removeAllPipes();
 });

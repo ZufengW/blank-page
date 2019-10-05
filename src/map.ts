@@ -3,17 +3,17 @@
 const MAP_SCHEMATIC = [
   '    #######################################################################',
   '                                              #                            ',
-  '# + This page is intentionally left blank. #  +#                          #',
+  '# + This.page is intentionally left blank. #  +#                          #',
   '#                                                                          ',
-  '#        *                                                                 ',
+  '         *     #                                                           ',
   '                                                                           ',
   '#                                                                          ',
   '# +           +  # #  #                       +#                           ',
   '                                              #                            ',
   '2            .                                                             ',
-  '                                                                           ',
-  '  #            1                                                           ',
-  '              #                                                            ',
+  '                 1                                                         ',
+  '  #            +    #                                                      ',
+  '   2          ##                                                           ',
   '                                                                           ',
   '                                                                           ',
   '                                                                           ',
@@ -84,10 +84,13 @@ function setupMapPre(): MapTile[][] {
       span.onclick = () => {
         onSpanClick(r, c);
       };
+      // Beacons (number digits) get a special class
+      if (mapTile.char.match(/\d/)) {
+        span.classList.add('beacon');
+      }
     }
     map.push(mapRow);
   }
-  // TODO: click events added to all the spans...
 
   // Reveal the first part of the map
   for (let i = 3; i < 42; i++) {
@@ -100,9 +103,14 @@ function setupMapPre(): MapTile[][] {
 initRenderMap(document.getElementById('game-pre') as HTMLPreElement);
 export const gameMap = setupMapPre();
 let starsCollected = 0;
+let activeBeacons = {};
+/** Power level increases when lighting a bunch of beacons */
+let powerLevel = 0;
 
 /** Updates the visibility of the entire map. */
 export function updateMap(): void {
+  activeBeacons = {};
+
   for (const row of gameMap) {
     for (const tile of row) {
       if (!tile.revealed) {
@@ -124,7 +132,16 @@ export function updateMap(): void {
         tile.span.classList.add(INTERACTIVE);
         continue;
       }
+      // Tile is completely revealed.
       updateSpan(tile);
+      // Count activated beacons
+      if (tile.char.match(/\d/) && isInteractive(tile)) {
+        if (activeBeacons[tile.char]) {
+          activeBeacons[tile.char]++;
+        } else {
+          activeBeacons[tile.char] = 1;
+        }
+      }
     }
   }
 }
@@ -256,6 +273,17 @@ function onSpanClick(row: number, col: number): void {
     }
     return updateMap();
   }
+  // If click on beacon, check if the others are all active...
+  if (tile.char.match(/\d/)) {
+    const numBeaconsActive: number = activeBeacons[tile.char];
+    console.log(`numBeaconsActive for ${tile.char}:`, numBeaconsActive);
+    if (numBeaconsActive === parseInt(tile.char, 10)) {
+      console.log('Activate beacon', tile.char);
+      powerLevel = numBeaconsActive;
+      destroyAndRevealBeacons(numBeaconsActive);
+    }
+    return updateMap();
+  }
   if (tile.char === '*' ) {
     starsCollected++; console.log('Collected a star', starsCollected);
     tile.char = ' ';
@@ -345,18 +373,9 @@ function isInteractive(tile: MapTile): boolean {
     }
     return false;
   }
-  if (tile.char === '|' ) {
-    // Works if has any empty up/down neighbours
-    const {up, down} = getNeighbours(tile);
-    return (up && up.char === ' ') || (down && down.char === ' ');
-  }
-  if (tile.char === '-' ) {
-    // Works if has any empty left/right neighbours
-    const {left, right} = getNeighbours(tile);
-    return (left && left.char === ' ') || (right && right.char === ' ');
-  }
-  if (tile.char === '*' ) {
-    return true;  // Can simply collect it.
+  if (tile.char.match(/\d/)) {
+    // Works if has any non-empty neighbours.
+    return getNeighboursAsArray(tile).filter(t => t.char !== ' ').length > 0;
   }
   return false;
 }
@@ -405,4 +424,38 @@ function getNeighboursAsArray(tile: MapTile) {
   if (up) { arr.push(up); }
   if (down) { arr.push(down); }
   return arr;
+}
+
+/**
+ * Deactivate all the beacons on the map with number equal to beaconNum.
+ * And reveal all the beacons on the map with number equal to beaconNum + 1.
+ */
+function destroyAndRevealBeacons(beaconNum: number): void {
+  const toDestroy = String(beaconNum);
+  const toReveal = String(beaconNum + 1);
+  for (const row of gameMap) {
+    for (const tile of row) {
+      if (tile.char === toReveal) {
+        tile.revealed = 2;
+      } else if (tile.char === toDestroy) {
+        tile.char = ' ';
+      }
+    }
+  }
+}
+
+/** Power: remove all pipes from the map */
+export function removeAllPipes(): void {
+  if (powerLevel < 1) {
+    console.error('Must have power level at least 1');
+    return;
+  }
+  for (const row of gameMap) {
+    for (const tile of row) {
+      if (tile.char === '-' || tile.char === '|') {
+        tile.char = ' ';
+      }
+    }
+  }
+  updateMap();
 }

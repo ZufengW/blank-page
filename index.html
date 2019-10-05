@@ -12,6 +12,9 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
+    }
+
+    pre {
       font-size: 1.1em;
     }
 
@@ -32,11 +35,19 @@
       cursor: pointer;
       color: #009;
     }
+
+    .interactive.beacon {
+      background-color: orange;
+    }
   </style>
 </head>
 <body>
   <div id="content">
     <pre id="game-pre" class="unselectable"></pre>
+    <h2>Powers</h2>
+    <ol>
+      <li><button id="power-1-button">Remove all pipes</button></li>
+    </ol>
   </div>
   <script src="vendors.app.bundle.js"></script>
   <script src="app.bundle.js"></script>
