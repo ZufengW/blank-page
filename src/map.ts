@@ -2,23 +2,23 @@ import {getPower2Checked, getPowerLevel, setPowerLevel} from './powers';
 
 /** The world map. Everything starts hidden except for the first sentence. */
 const MAP_SCHEMATIC = [
-  '        3     +                   +      3    #                            ',
-  '                                                                           ',
+  '      #+                     0                .                            ',  // Leftmost needs to be blocked
+  '    3          +              +          4 #                               ',  // Need . and slider to block middle +.
+  '                                          0                                ',
   '# + This.page is intentionally left blank. #  +#                          #',
-  '#                                                                          ',
-  '         *                                                                 ',
-  '                                  3                                        ',
-  '#                                                                          ',
-  '# +           +  # #  #                       +#                           ',
+  '                                                                           ',
+  '$          3                 +            +                                ',
+  '                                                                           ',
+  '# +           +  #    #     #                 +#                           ',
   '                                              #                            ',
   '2            .                                                             ',
-  '                 1                                                         ',
-  '  #            +    #                                                      ',
+  '                 1          +       3                                      ',
+  '  #            +    #       ###                                            ',
   '   2          ##                                                           ',
   '                                                                           ',
+  '     # $ #                                                                 ',
   '                                                                           ',
-  '                                                                           ',
-  '                                                                           ',
+  '       #                                                                   ',
   '                                                                           ',
   '                                                                           ',
   '                                                                           ',
@@ -40,12 +40,20 @@ interface MapTile {
   col: number;
 }
 
+/** For storing a bunch of references to beacons */
+interface BeaconsGroup { tiles: MapTile[]; numActive: number; }
+type BeaconsType = BeaconsGroup[];
+
 const MAP_ROWS = MAP_SCHEMATIC.length;
 /** Number of columns in the map. */
 const MAP_COLS = MAP_SCHEMATIC[0].length;
 
-/** Classname */
+/** Classnames */
 const INTERACTIVE = 'interactive';
+const ANTI_BEACON = 'anti-beacon';
+const LOW_BEACON = 'low-beacon';
+const MED_BEACON = 'med-beacon';
+const HIGH_BEACON = 'high-beacon';
 
 /** Do this once to render the map initially */
 function initRenderMap(pre: HTMLPreElement): void {
@@ -67,8 +75,18 @@ function initRenderMap(pre: HTMLPreElement): void {
  *
  * Also adds click listeners to the spans.
  */
-function setupMapPre(): MapTile[][] {
+function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
   const map: MapTile[][] = [];
+  // Also get references to just the beacons.
+  const b: BeaconsGroup[] = [
+    {tiles: [], numActive: 0},
+    {tiles: [], numActive: 0},
+    {tiles: [], numActive: 0},
+    {tiles: [], numActive: 0},
+    {tiles: [], numActive: 0},
+    {tiles: [], numActive: 0},
+  ];
+
   for (let r = 0; r < MAP_ROWS; r++) {
     const mapRow: MapTile[] = [];
     for (let c = 0; c < MAP_COLS; c++) {
@@ -87,6 +105,7 @@ function setupMapPre(): MapTile[][] {
       };
       // Beacons (number digits) get a special class
       if (mapTile.char.match(/\d/)) {
+        b[mapTile.char].tiles.push(mapTile);
         span.classList.add('beacon');
       }
     }
@@ -95,32 +114,32 @@ function setupMapPre(): MapTile[][] {
 
   // Reveal the first part of the map
   for (let i = 3; i < 42; i++) {
-    map[2][i].revealed = 2;
+    map[3][i].revealed = 2;
   }
 
-  return map;
+  return {map, beacons: b};
 }
 
 initRenderMap(document.getElementById('game-pre') as HTMLPreElement);
-export const gameMap = setupMapPre();
+export const {map: gameMap, beacons} = setupMapPre();
+console.log(beacons);
 let starsCollected = 0;
-let activeBeacons = {};
 
 /** Updates the visibility of the entire map. */
 export function updateMap(): void {
-  activeBeacons = {};
+  // Reset the count in preparation for recounting.
+  for (const group of Object.values(beacons)) {
+    group.numActive = 0;
+  }
 
   for (const row of gameMap) {
     for (const tile of row) {
       if (!tile.revealed) {
         // Check if should be revealed? When next to a visible and active char
-        const neighbours = getNeighboursAsArray(tile);
-        for (const n of neighbours) {
-          if (n.revealed === 2 && n.char !== ' ') {
-            // Empty tiles get fully revealed immediately. Non-empty get ?
-            tile.revealed = tile.char === ' ' ? 2 : 1;
-            break;
-          }
+        if (hasVisibleNeighbour(tile)) {
+          // Empty tiles and 0-beacons get fully revealed immediately.
+          // Other non-empty tiles get ?
+          tile.revealed = (tile.char === ' ' || tile.char === '0') ? 2 : 1;
         }
       }
       if (tile.revealed === 0) {
@@ -133,16 +152,13 @@ export function updateMap(): void {
       }
       // Tile is completely revealed.
       updateSpan(tile);
-      // Count activated beacons
-      if (tile.char.match(/\d/) && isInteractive(tile)) {
-        if (activeBeacons[tile.char]) {
-          activeBeacons[tile.char]++;
-        } else {
-          activeBeacons[tile.char] = 1;
-        }
+      // Count activated beacons. Only activated if has the char and neighbour.
+      if (tile.char.match(/\d/) && hasVisibleNeighbour(tile)) {
+        beacons[tile.char].numActive++;
       }
     }
   }
+  updateBeacons();
 }
 
 /** Updates just one span on the map. */
@@ -154,6 +170,72 @@ function updateSpan(tile: MapTile) {
   } else {
     tile.span.classList.remove(INTERACTIVE);
   }
+}
+
+/** Updates the styles of the beacons */
+function updateBeacons() {
+  // Zero group (anti-beacons) overrides all. Makes all beacons highlight.
+  if (beacons[0].numActive > 0) {
+    for (const group of beacons) {
+      for (const tile of group.tiles) {
+        if (tile.revealed === 2 && tile.char.match(/\d/)) {
+          tile.span.classList.add(ANTI_BEACON);
+          tile.span.classList.remove(LOW_BEACON, MED_BEACON, HIGH_BEACON);
+        }
+      }
+    }
+    return;
+  } else {
+    // Deactiate the zero beacons
+    for (const tile of beacons[0].tiles) {
+      tile.span.classList.remove(ANTI_BEACON);
+    }
+  }
+
+  for (let i = 1; i < beacons.length; i++) {
+    const group = beacons[i];
+    // If entire group active, highlight them all.
+    if (group.numActive === group.tiles.length) {
+      for (const tile of group.tiles) {
+        if (tile.revealed === 2) {
+          tile.span.classList.add(HIGH_BEACON);
+          tile.span.classList.remove(LOW_BEACON, MED_BEACON, ANTI_BEACON);
+        }
+      }
+      continue;
+    }
+    // Otherwise highlight them depending on whether they are active
+    for (const tile of group.tiles) {
+      // Also need to check that the beacon is still there...
+      if (tile.revealed === 2 && tile.char === String(i)) {
+        if (hasVisibleNeighbour(tile)) {
+          tile.span.classList.add(MED_BEACON);
+          tile.span.classList.remove(ANTI_BEACON, LOW_BEACON, HIGH_BEACON);
+        } else {
+          tile.span.classList.add(LOW_BEACON);
+          tile.span.classList.remove(ANTI_BEACON, MED_BEACON, HIGH_BEACON);
+        }
+      } else {
+        // Invisible or deactivated beacon tile
+        tile.span.classList.remove(ANTI_BEACON, LOW_BEACON, MED_BEACON, HIGH_BEACON);
+      }
+    }
+  }
+}
+
+/**
+ * Returns whether or not at least one of the 4 neighbours
+ * is visible and non-empty.
+ */
+function hasVisibleNeighbour(tile: MapTile): boolean {
+  const neighbours = getNeighboursAsArray(tile);
+  for (const n of neighbours) {
+    // Walls # don't count
+    if (n.revealed === 2 && n.char !== ' ') {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -284,9 +366,8 @@ function onSpanClick(row: number, col: number): void {
   }
   // If click on beacon, check if the others are all active...
   if (tile.char.match(/\d/)) {
-    const numBeaconsActive: number = activeBeacons[tile.char];
-    console.log(`numBeaconsActive for ${tile.char}:`, numBeaconsActive);
-    if (numBeaconsActive === parseInt(tile.char, 10)) {
+    if (tile.span.classList.contains(HIGH_BEACON)) {
+      const numBeaconsActive = parseInt(tile.char, 10);
       console.log('Activate beacon', tile.char);
       setPowerLevel(numBeaconsActive);
       destroyAndRevealBeacons(numBeaconsActive);
@@ -388,7 +469,7 @@ function isInteractive(tile: MapTile): boolean {
   }
   if (tile.char.match(/\d/)) {
     // Works if has any non-empty neighbours.
-    return getNeighboursAsArray(tile).filter(t => t.char !== ' ').length > 0;
+    return (tile.span.classList.contains(HIGH_BEACON));
   }
   return false;
 }

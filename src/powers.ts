@@ -22,6 +22,11 @@ export function setPowerLevel(newPowerLevel: number) {
   // Make parts of the container appear
   for (let p = 1; p <= newPowerLevel; p++) {
     const li = document.getElementById(`power-${newPowerLevel}-li`);
+    if (!li) {
+      // Must already have all the powers.
+      console.log('No more powers');
+      return;
+    }
     if (li.classList.contains(INVISIBLE)) {
       li.classList.remove(INVISIBLE);
     }
