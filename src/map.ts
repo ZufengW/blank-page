@@ -3,17 +3,17 @@
 const MAP_SCHEMATIC = [
   '    #######################################################################',
   '                                              #                            ',
-  '# + T... page is intentionally left blank. #  +#                          #',
+  '# + This page is intentionally left blank. #  +#                          #',
   '#                                                                          ',
   '#        *                                                                 ',
   '                                                                           ',
-  '#          1                                                               ',
+  '#                                                                          ',
   '# +           +  # #  #                       +#                           ',
   '                                              #                            ',
   '2            .                                                             ',
-  '              # #                                                          ',
-  '  #                                                                        ',
   '                                                                           ',
+  '  #            1                                                           ',
+  '              #                                                            ',
   '                                                                           ',
   '                                                                           ',
   '                                                                           ',
@@ -165,21 +165,48 @@ function onSpanClick(row: number, col: number): void {
     updateMap();
     return;
   }
-
-  // Lowercase disappears.
+  // Lowercase characters disappear.
   if (tile.char >= 'a' && tile.char <= 'z') {
+    // To be less tedious, also removes contiguous lowercase characters.
     tile.char = ' ';
-    updateMap();  // map because this tile becomes empty
-    return;
+    let r = 0;
+    let c = 0;
+    // Go left
+    r = tile.row;
+    c = tile.col - 1;
+    while (c >= 0) {
+      const currTile = gameMap[r][c];
+      if (!(currTile.char >= 'a' && currTile.char <= 'z')) { break; }
+      currTile.char = ' ';
+      c--;
+    }
+    // Go right
+    c = tile.col + 1;
+    while (c < MAP_COLS) {
+      const currTile = gameMap[r][c];
+      if (!(currTile.char >= 'a' && currTile.char <= 'z')) { break; }
+      currTile.char = ' ';
+      c++;
+    }
+    return updateMap();
   }
 
-  // Expands to the left
+  // Expands to the left as long as there is space at the end of the ...
   if (tile.char === '.') {
-    // updateSpan(tile);
-    const leftTile = gameMap[tile.row][tile.col - 1];
-    leftTile.char = '.';
-    updateMap();
-    return;
+    let r = 0;
+    let c = 0;
+    // Go left
+    r = tile.row;
+    c = tile.col - 1;
+    while (c >= 0) {
+      if (gameMap[r][c].char === ' ') {
+        gameMap[r][c].char = '.';
+        break;
+      }
+      if (gameMap[r][c].char !== '.') { break; }
+      c--;
+    }
+    return updateMap();
   }
   if (tile.char === '+' ) {
     // May expand out as long as there is empty space at the end of any pipe.
@@ -245,10 +272,22 @@ function isInteractive(tile: MapTile): boolean {
   if ((tile.char >= 'A' && tile.char <= 'Z') || (tile.char >= 'a' && tile.char <= 'z')) {
     return true;
   }
-  // . expands to the left if there is space.
+  // May expand to the left as long as there is space at the end of the line...
   if (tile.char === '.') {
-    if (isClear(tile.row, tile.col - 1)) {
-      return true;
+    // May expand as long as there is empty space at the end of any pipe.
+    let r = 0;
+    let c = 0;
+    // Go left
+    r = tile.row;
+    c = tile.col - 1;
+    while (c >= 0) {
+      if (gameMap[r][c].char === ' ') {
+        return true;
+      }
+      if (gameMap[r][c].char !== '.') {
+        break;
+      }
+      c--;
     }
   }
   if (tile.revealed === 1) {
