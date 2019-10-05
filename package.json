@@ -1,0 +1,22 @@
+{
+  "name": "blank-page",
+  "version": "0.1.0",
+  "description": "Ludum Dare 45 -- Start with nothing",
+  "main": "index.js",
+  "author": "Zuf",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack",
+    "dev": "webpack-dev-server"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^5.0.4",
+    "ts-loader": "^6.2.0",
+    "tslint": "^5.20.0",
+    "typescript": "^3.6.3",
+    "typescript-tslint-plugin": "^0.5.4",
+    "webpack": "^4.41.0",
+    "webpack-cli": "^3.3.9",
+    "webpack-dev-server": "^3.8.2"
+  }
+}

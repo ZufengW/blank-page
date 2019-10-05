@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Blank page</title>
+  <style>
+    html,
+    body,
+    canvas {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-size: 1.1em;
+    }
+
+    span {
+      color: #444;
+    }
+
+    .unselectable {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    .interactive {
+      cursor: pointer;
+      color: #009;
+    }
+  </style>
+</head>
+<body>
+  <div id="content">
+    <pre id="game-pre" class="unselectable"></pre>
+  </div>
+  <script src="vendors.app.bundle.js"></script>
+  <script src="app.bundle.js"></script>
+</body>
+</html>

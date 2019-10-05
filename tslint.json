@@ -1,0 +1,16 @@
+{
+  "extends": "tslint:recommended",
+  "rules": {
+    "object-literal-sort-keys": false,
+    "no-trailing-whitespace": true,
+    "no-console": false,
+    "object-literal-shorthand": true,
+    "quotemark": [true, "single"],
+    "ordered-imports": true,
+    "radix": false,
+    "max-line-length": false,
+    "interface-name": false,
+    "arrow-parens": false
+  },
+  "defaultSeverity": "error"
+}
