@@ -146,11 +146,11 @@ function updateSpan(tile: MapTile) {
  * @param r row index
  * @param c col index
  */
-function onSpanClick(r: number, c: number): void {
-  console.log('span clicked', r, c);
+function onSpanClick(row: number, col: number): void {
+  console.log('span clicked', row, col);
 
   // TODO: behaviour depends on what the character is
-  const tile = gameMap[r][c];
+  const tile = gameMap[row][col];
   if (!isInteractive(tile)) {
     return;
   }
@@ -181,47 +181,53 @@ function onSpanClick(r: number, c: number): void {
     updateMap();
     return;
   }
-  if (tile.char === '+') {
-    // neighbouring non-empty tiles become - and |
-    const n = getNeighbours(tile);
-    if (n.left && n.left.char === ' ') {
-      n.left.char = '-';
+  if (tile.char === '+' ) {
+    // May expand out as long as there is empty space at the end of any pipe.
+    let r = 0;
+    let c = 0;
+    // Go left
+    r = tile.row;
+    c = tile.col - 1;
+    while (c >= 0) {
+      if (gameMap[r][c].char === ' ') {
+        gameMap[r][c].char = '-';
+        break;
+      }
+      if (gameMap[r][c].char !== '-') { break; }
+      c--;
     }
-    if (n.right && n.right.char === ' ') {
-      n.right.char = '-';
+    // Go right
+    c = tile.col + 1;
+    while (c < MAP_COLS) {
+      if (gameMap[r][c].char === ' ') {
+        gameMap[r][c].char = '-';
+        break;
+      }
+      if (gameMap[r][c].char !== '-') { break; }
+      c++;
     }
-    if (n.up && n.up.char === ' ') {
-      n.up.char = '|';
+    // Go up
+    r = tile.row - 1;
+    c = tile.col;
+    while (r >= 0) {
+      if (gameMap[r][c].char === ' ') {
+        gameMap[r][c].char = '|';
+        break;
+      }
+      if (gameMap[r][c].char !== '|') { break; }
+      r--;
     }
-    if (n.down && n.down.char === ' ') {
-      n.down.char = '|';
+    // Go down
+    r = tile.row + 1;
+    while (r < MAP_ROWS) {
+      if (gameMap[r][c].char === ' ') {
+        gameMap[r][c].char = '|';
+        break;
+      }
+      if (gameMap[r][c].char !== '|') { break; }
+      r++;
     }
-    updateMap();
-    return;
-  }
-  // Expands up and down
-  if (tile.char === '|') {
-    const n = getNeighbours(tile);
-    if (n.up && n.up.char === ' ') {
-      n.up.char = '|';
-    }
-    if (n.down && n.down.char === ' ') {
-      n.down.char = '|';
-    }
-    updateMap();
-    return;
-  }
-  // Expands left and right
-  if (tile.char === '-') {
-    const n = getNeighbours(tile);
-    if (n.left && n.left.char === ' ') {
-      n.left.char = '-';
-    }
-    if (n.right && n.right.char === ' ') {
-      n.right.char = '-';
-    }
-    updateMap();
-    return;
+    return updateMap();
   }
   if (tile.char === '*' ) {
     starsCollected++; console.log('Collected a star', starsCollected);
@@ -249,8 +255,56 @@ function isInteractive(tile: MapTile): boolean {
     return true;
   }
   if (tile.char === '+' ) {
-    // Works if has any empty neighbours. Need to expand outward for pipes.
-    return getNeighboursAsArray(tile).filter(t => t.char === ' ').length > 0;
+    // May expand as long as there is empty space at the end of any pipe.
+    let r = 0;
+    let c = 0;
+    // Go left
+    r = tile.row;
+    c = tile.col - 1;
+    while (c >= 0) {
+      if (gameMap[r][c].char === ' ') {
+        return true;
+      }
+      if (gameMap[r][c].char !== '-') {
+        break;
+      }
+      c--;
+    }
+    // Go right
+    c = tile.col + 1;
+    while (c < MAP_COLS) {
+      if (gameMap[r][c].char === ' ') {
+        return true;
+      }
+      if (gameMap[r][c].char !== '-') {
+        break;
+      }
+      c++;
+    }
+    // Go up
+    r = tile.row - 1;
+    c = tile.col;
+    while (r >= 0) {
+      if (gameMap[r][c].char === ' ') {
+        return true;
+      }
+      if (gameMap[r][c].char !== '|') {
+        break;
+      }
+      r--;
+    }
+    // Go down
+    r = tile.row + 1;
+    while (r < MAP_ROWS) {
+      if (gameMap[r][c].char === ' ') {
+        return true;
+      }
+      if (gameMap[r][c].char !== '|') {
+        break;
+      }
+      r++;
+    }
+    return false;
   }
   if (tile.char === '|' ) {
     // Works if has any empty up/down neighbours
