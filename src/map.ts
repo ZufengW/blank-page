@@ -147,10 +147,15 @@ function updateSpan(tile: MapTile) {
  * @param c col index
  */
 function onSpanClick(row: number, col: number): void {
-  console.log('span clicked', row, col);
-
   // TODO: behaviour depends on what the character is
   const tile = gameMap[row][col];
+  console.log('span clicked', row, col, tile);
+
+  if (tile.revealed === 1) {  // May click '?' to reveal it
+    tile.revealed = 2;
+    updateMap();
+    return;
+  }
   if (!isInteractive(tile)) {
     return;
   }
@@ -173,11 +178,6 @@ function onSpanClick(row: number, col: number): void {
     // updateSpan(tile);
     const leftTile = gameMap[tile.row][tile.col - 1];
     leftTile.char = '.';
-    updateMap();
-    return;
-  }
-  if (tile.revealed === 1) {  // May click ?
-    tile.revealed = 2;
     updateMap();
     return;
   }
