@@ -12,6 +12,14 @@
       padding: 0;
       overflow: hidden;
       transition: opacity 0.5s;
+
+      font-family: monospace;
+    }
+
+    button {
+      font: inherit;
+      margin: 0;
+      padding: 0;
     }
 
     pre {
@@ -52,12 +60,18 @@
   </style>
 </head>
 <body>
-  <div id="content">
-    <pre id="game-pre" class="unselectable"></pre>
+  <div id="content" class="unselectable">
+    <pre id="game-pre"></pre>
     <div id="powers-container" class="invisible">
       <h2>Powers</h2>
       <ol>
-        <li><button id="power-1-button">Remove all pipes</button></li>
+        <li id="power-1-li" class="invisible">
+          <button id="power-1-button">Remove all pipes</button>
+        </li>
+        <li id="power-2-li" class="invisible">
+          <input type="checkbox" id="power-2-check">
+          <label for="power-2-check">Retract dots</label>
+        </li>
       </ol>
     </div>
   </div>

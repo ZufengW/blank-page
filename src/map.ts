@@ -1,12 +1,13 @@
+import {getPower2Checked, getPowerLevel, setPowerLevel} from './powers';
 
 /** The world map. Everything starts hidden except for the first sentence. */
 const MAP_SCHEMATIC = [
-  '    #######################################################################',
-  '                                              #                            ',
+  '        3     +                   +      3    #                            ',
+  '                                                                           ',
   '# + This.page is intentionally left blank. #  +#                          #',
   '#                                                                          ',
-  '         *     #                                                           ',
-  '                                                                           ',
+  '         *                                                                 ',
+  '                                  3                                        ',
   '#                                                                          ',
   '# +           +  # #  #                       +#                           ',
   '                                              #                            ',
@@ -104,8 +105,6 @@ initRenderMap(document.getElementById('game-pre') as HTMLPreElement);
 export const gameMap = setupMapPre();
 let starsCollected = 0;
 let activeBeacons = {};
-/** Power level increases when lighting a bunch of beacons */
-let powerLevel = 0;
 
 /** Updates the visibility of the entire map. */
 export function updateMap(): void {
@@ -215,15 +214,25 @@ function onSpanClick(row: number, col: number): void {
     // Go left
     r = tile.row;
     c = tile.col - 1;
+    if (getPower2Checked()) {
+      c = tile.col;
+      while (c >= 0) {
+        // If the tile on the left is not . or out of bounds, may retract.
+        if (gameMap[r][c - 1].char !== '.' || c - 1 < 0) {
+          gameMap[r][c].char = ' ';
+          return updateMap();
+        }
+        c--;
+      }
+    }
     while (c >= 0) {
       if (gameMap[r][c].char === ' ') {
         gameMap[r][c].char = '.';
-        break;
+        return updateMap();
       }
       if (gameMap[r][c].char !== '.') { break; }
       c--;
     }
-    return updateMap();
   }
   if (tile.char === '+' ) {
     // May expand out as long as there is empty space at the end of any pipe.
@@ -279,7 +288,7 @@ function onSpanClick(row: number, col: number): void {
     console.log(`numBeaconsActive for ${tile.char}:`, numBeaconsActive);
     if (numBeaconsActive === parseInt(tile.char, 10)) {
       console.log('Activate beacon', tile.char);
-      powerLevel = numBeaconsActive;
+      setPowerLevel(numBeaconsActive);
       destroyAndRevealBeacons(numBeaconsActive);
     }
     return updateMap();
@@ -303,8 +312,12 @@ function isInteractive(tile: MapTile): boolean {
   // May expand to the left as long as there is space at the end of the line...
   if (tile.char === '.') {
     // May expand as long as there is empty space at the end of any pipe.
-    let r = 0;
-    let c = 0;
+    let r = tile.row;
+    let c = tile.col;
+    if (getPower2Checked()) {
+      //  May retract as long as there is a dot on the left.
+      return isInMapBounds(r, c - 1) && (gameMap[r][c - 1].char === '.');
+    }
     // Go left
     r = tile.row;
     c = tile.col - 1;
@@ -442,17 +455,11 @@ function destroyAndRevealBeacons(beaconNum: number): void {
       }
     }
   }
-  // Extra code to make the powers container appear
-  const powersContainer = document.getElementById('powers-container');
-  if (powersContainer.classList.contains('invisible')) {
-    powersContainer.classList.remove('invisible');
-    powersContainer.scrollIntoView({behavior: 'smooth'});
-  }
 }
 
 /** Power: remove all pipes from the map */
 export function removeAllPipes(): void {
-  if (powerLevel < 1) {
+  if (getPowerLevel() < 1) {
     console.error('Must have power level at least 1');
     return;
   }
