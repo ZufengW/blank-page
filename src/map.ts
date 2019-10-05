@@ -2,22 +2,23 @@ import {getPower2Checked, getPowerLevel, setPowerLevel} from './powers';
 
 /** The world map. Everything starts hidden except for the first sentence. */
 const MAP_SCHEMATIC = [
-  '      #+                     0                .                            ',  // Leftmost needs to be blocked
-  '    3          +              +          4 #                               ',  // Need . and slider to block middle +.
+  '            0 3                                                            ',
+  '          3    #             0                .                            ',  // Leftmost needs to be blocked
+  '               +              +          4 #                               ',  // Need . and slider to block middle +.
   '                                          0                                ',
-  '# + This.page is intentionally left blank. #  +#                          #',
+  '# + This.page is intentionally left blank. #   #                          #',
   '                                                                           ',
-  '$          3                 +            +                                ',
-  '                                                                           ',
-  '# +           +  #    #     #                 +#                           ',
+  '$          +                 +            +                                ',  // Leftmost +: need up 2, down 3. Extend 3 more.
+  '               #                                                           ',
+  '# +           +   #   #     #                  #                           ',  // Leftmost +: must reset to get the 2. 2nd: must expand exactly 2
   '                                              #                            ',
   '2            .                                                             ',
-  '                 1          +       3                                      ',
-  '  #            +    #       ###                                            ',
-  '   2          ##                                                           ',
-  '                                                                           ',
-  '     # $ #                                                                 ',
-  '                                                                           ',
+  '            #     +   #                                                    ',
+  '  #       3  # +    #       ###                                            ',
+  '            0 #    1                                                       ',
+  '          #      +                                                         ',
+  '     # $ #     #  #   2                                                    ',
+  '           #     #                                                         ',
   '       #                                                                   ',
   '                                                                           ',
   '                                                                           ',
@@ -112,9 +113,9 @@ function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
     map.push(mapRow);
   }
 
-  // Reveal the first part of the map
+  // Reveal the first part of the map: the first sentence
   for (let i = 3; i < 42; i++) {
-    map[3][i].revealed = 2;
+    map[4][i].revealed = 2;
   }
 
   return {map, beacons: b};
