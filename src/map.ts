@@ -169,8 +169,10 @@ export function updateMap(): void {
           tile.revealed = (tile.char === ' ' || tile.char === '0')
             ? VIS.VISIBLE
             : VIS.QUESTION;
-        } else if (getPowerLevel() > 0 && hasVisibleNeighbour(tile, 2)) {
-          // With Perception +, may check distance 2
+        } else if ((getPowerLevel() > 0 && hasVisibleNeighbour(tile, 2))
+            || getPowerLevel() >= 5) {
+          // With Perception +, may check distance 2.
+          // With Perception ++, can see the entire map faintly.
           if (tile.char === ' ' || tile.char === '0') {
             tile.revealed = VIS.VISIBLE;  // Reveal some tiles immediately.
           } else {
