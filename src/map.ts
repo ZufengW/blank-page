@@ -2,28 +2,28 @@ import {getPower2Checked, getPowerLevel, setPowerLevel, SLIDER_POWER_REQUIREMENT
 
 /** The world map. Everything starts hidden except for the first sentence. */
 const MAP_SCHEMATIC = [
-  '@           0 4                                                            ',
-  '          4    #             0                .                            ',  // Leftmost needs to be blocked
-  '               +              +          5 #                               ',  // Need . and slider to block middle +.
-  '                                          0                                ',
-  '# + This.page is intentionally left blank. #   #                          #',
-  '                                                                           ',
-  '4          +                 +            +                                ',  // Leftmost +: need up 2, down 3. Extend 3 more.
-  '               #                                                           ',
-  '# +     1     +   #   #     #                  #                           ',  // 2nd +: must expand exactly twice to reach 4.
-  '                                              #                            ',
-  '3      2     .                                                             ',
-  '            #     +   #                                                    ',
-  '  #     # 4    +    #       ###                                            ',
-  '            0 #    2                                                       ',
-  '          #      +                                                         ',
-  '     # $ #        #   3                                                    ',
-  '           #     #                                                         ',
-  '       #        3                                                          ',
-  '               #                                                           ',
-  '                                                                           ',
-  '                                                                           ',
-  '                                                                           ',
+  '@           0 4                              # ## + 5 ',  // Only the slider should be able to reach this 5
+  '          4    #             0          .     ## #   #',  // Leftmost needs to be blocked
+  '               +              +          6 # #      # ',  // Need . and slider to block middle + while it extends to 5.
+  '                                          0  #        ',
+  '# + This.page is intentionally left blank.            ',  // Need to get slider to below the 0.
+  '                                              #       ',
+  '4          +                 +            +    5      ',  // Leftmost +: need up 2, down 3. Extend 3 more.
+  '               # #          ##                        ',
+  '# +     1     +   #            0             # #      ',  // 2nd +: must expand exactly twice to reach 4.
+  '                           #+                 #       ',  // Middle + is more discoverable due to #
+  '3      2     .                                       #',
+  '            #     +   #                           #   ',
+  '  #     # 4    +    #  #    5                         ',
+  '            0 #    2                      # #        #',
+  '          #      +      # # 6 ###########        # # #',
+  '     # $ #        #   3  # # #           ########   6 ',
+  '           #     # # #  #                             ',
+  '       #        3 # # ##                              ',
+  ' #             # #                                    ',
+  '5 #####  # #### #                                     ',
+  '           #                                          ',
+  '#6      +   5 0                                       ',  // Only the slider can enter. 5 is gateway.
 ];
 
 /** Visibility of a tile */
@@ -93,6 +93,7 @@ function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
   const map: MapTile[][] = [];
   // Also get references to just the beacons.
   const b: BeaconsGroup[] = [
+    {tiles: [], numActive: 0},
     {tiles: [], numActive: 0},
     {tiles: [], numActive: 0},
     {tiles: [], numActive: 0},
