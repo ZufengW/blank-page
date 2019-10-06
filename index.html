@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Blank page</title>
+  <style>
+    html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: monospace;
+      margin: 0;
+      padding: 10px;
+      transition: opacity 0.5s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    button {
+      font: inherit;
+      margin: 0;
+      padding: 0;
+    }
+
+    pre {
+      font-size: 1.1em;
+    }
+
+    span {
+      color: #444;
+      transition: background-color 1s;
+    }
+
+    .anti-beacon {
+      color: white;
+      background-color: black;
+    }
+
+    .low-beacon {
+      background-color: yellow;
+    }
+
+    .med-beacon {
+      background-color: rgb(255, 208, 0);
+    }
+
+    .high-beacon {
+      background-color: orange;
+    }
+
+    .faint {
+      opacity: .5;
+    }
+
+    .unselectable {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    .interactive {
+      cursor: pointer;
+      color: #009;
+    }
+
+    .invisible {
+      /* transform: translate(-100%, -500px); */
+      display: none;
+      opacity: 0;
+    }
+
+    .slider {
+      background-color: rgb(0, 183, 255);
+      color: white;
+      transition: none;
+    }
+
+    .trophy {
+      display: inline-block;
+      margin: 0;
+    }
+
+    #money-display {
+      margin-bottom: -1em;
+    }
+
+    #powers-container {
+      transition: opacity 2s;
+    }
+
+    #trophy-case {
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div id="content" class="unselectable">
+    <pre id="game-pre"></pre>
+    <div id="powers-container" class="invisible">
+      <p>Powers</p>
+      <ol>
+        <li id="power-1-li" class="invisible">
+          Perception +
+        </li>
+        <li id="power-2-li" class="invisible">
+          <button id="power-2-button" class="interactive">
+            Remove all pipes
+          </button>
+        </li>
+        <li id="power-3-li" class="invisible">
+          <input type="checkbox" id="power-3-check" class="interactive">
+          <label for="power-3-check"  class="interactive">Retract dots</label>
+        </li>
+        <li id="power-4-li" class="invisible">
+          Control of slider
+        </li>
+        <li id="power-5-li" class="invisible">
+          Perception ++
+        </li>
+        <li id="power-6-li" class="invisible">
+          Mastery of logic
+        </li>
+      </ol>
+    </div>
+    <div id="trophy-container" class="invisible">
+      <p id="money-display">Money: $0</p>
+      <div id="trophy-case"></div>
+      <pre id="trophy-next" class="trophy"></pre>
+    </div>
+    <p id="completionist"></p>
+  </div>
+  <script src="vendors.app.bundle.js"></script>
+  <script src="app.bundle.js"></script>
+</body>
+</html>
