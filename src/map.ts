@@ -64,6 +64,11 @@ const LOW_BEACON = 'low-beacon';
 const MED_BEACON = 'med-beacon';
 const HIGH_BEACON = 'high-beacon';
 
+/** Regex to match characters in the initial sentence */
+const WORD_MATCHER = /[Ta-z]/;
+/** Regex to match beacon symbols 0-9 */
+const BEACON_MATCHER = /\d/;
+
 /** Do this once to render the map initially */
 function initRenderMap(pre: HTMLPreElement): void {
   // Starts empty
@@ -113,7 +118,7 @@ function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
         onSpanClick(r, c);
       };
       // Beacons (number digits) get a special class
-      if (mapTile.char.match(/\d/)) {
+      if (mapTile.char.match(BEACON_MATCHER)) {
         b[mapTile.char].tiles.push(mapTile);
         span.classList.add('beacon');
       }
@@ -184,7 +189,7 @@ export function updateMap(): void {
         // Revealed tiles display as normal.
         updateSpan(tile);
         // Count activated beacons. Only activated if has the char and neighbour.
-        if (tile.char.match(/\d/) && hasVisibleNeighbour(tile)) {
+        if (tile.char.match(BEACON_MATCHER) && hasVisibleNeighbour(tile)) {
           beacons[tile.char].numActive++;
         }
       }
@@ -210,7 +215,7 @@ function updateBeacons() {
   if (beacons[0].numActive > 0) {
     for (const group of beacons) {
       for (const tile of group.tiles) {
-        if (tile.revealed === VIS.VISIBLE && tile.char.match(/\d/)) {
+        if (tile.revealed === VIS.VISIBLE && tile.char.match(BEACON_MATCHER)) {
           tile.span.classList.add(ANTI_BEACON);
           tile.span.classList.remove(LOW_BEACON, MED_BEACON, HIGH_BEACON);
         }
@@ -278,7 +283,6 @@ function hasVisibleNeighbour(tile: MapTile, dist = 1): boolean {
  * @param c col index
  */
 function onSpanClick(row: number, col: number): void {
-  // TODO: behaviour depends on what the character is
   const tile = gameMap[row][col];
   console.log('span clicked', row, col, tile);
 
@@ -290,14 +294,9 @@ function onSpanClick(row: number, col: number): void {
   if (!isInteractive(tile)) {
     return;
   }
-  // Uppercase becomes lowercase.
-  if (tile.char >= 'A' && tile.char <= 'Z') {
-    tile.char = tile.char.toLowerCase();
-    updateMap();
-    return;
-  }
-  // Lowercase characters disappear.
-  if (tile.char >= 'a' && tile.char <= 'z') {
+  // Initial words disappear when clicked.
+  // Hacky optimisation: short-circuit if power level indicates progress beyond.
+  if (getPowerLevel() < 1 && tile.char.match(WORD_MATCHER)) {
     // To be less tedious, also removes contiguous lowercase characters.
     tile.char = ' ';
     let r = 0;
@@ -307,7 +306,7 @@ function onSpanClick(row: number, col: number): void {
     c = tile.col - 1;
     while (c >= 0) {
       const currTile = gameMap[r][c];
-      if (!(currTile.char >= 'a' && currTile.char <= 'z')) { break; }
+      if (!(currTile.char.match(WORD_MATCHER))) { break; }
       currTile.char = ' ';
       c--;
     }
@@ -315,7 +314,7 @@ function onSpanClick(row: number, col: number): void {
     c = tile.col + 1;
     while (c < MAP_COLS) {
       const currTile = gameMap[r][c];
-      if (!(currTile.char >= 'a' && currTile.char <= 'z')) { break; }
+      if (!(currTile.char.match(WORD_MATCHER))) { break; }
       currTile.char = ' ';
       c++;
     }
@@ -398,7 +397,7 @@ function onSpanClick(row: number, col: number): void {
     return updateMap();
   }
   // If click on beacon, check if the others are all active...
-  if (tile.char.match(/\d/)) {
+  if (tile.char.match(BEACON_MATCHER)) {
     if (tile.span.classList.contains(HIGH_BEACON)) {
       const numBeaconsActive = parseInt(tile.char, 10);
       console.log('Activate beacon', tile.char);
@@ -420,8 +419,8 @@ function isInteractive(tile: MapTile): boolean {
   if (tile.char === ' ' || tile.revealed === VIS.HIDDEN || tile.revealed === VIS.FAINT) {
     return false;
   }
-  if ((tile.char >= 'A' && tile.char <= 'Z') || (tile.char >= 'a' && tile.char <= 'z')) {
-    return true;
+  if (getPowerLevel() < 1 && tile.char.match(WORD_MATCHER)) {
+    return true;  // Matches the initial sentence.
   }
   // May expand to the left as long as there is space at the end of the line...
   if (tile.char === '.') {
@@ -500,7 +499,7 @@ function isInteractive(tile: MapTile): boolean {
     }
     return false;
   }
-  if (tile.char.match(/\d/)) {
+  if (tile.char.match(BEACON_MATCHER)) {
     // See logic in: updateBeacons
     return (tile.span.classList.contains(HIGH_BEACON));
   }
