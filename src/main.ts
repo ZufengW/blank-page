@@ -17,8 +17,9 @@ document.addEventListener('click', () => {
   }
   mapPre.style.opacity = String(pageOpacity);
   // Optionally remove the listener when reached 1
+  // TODO: disallow interaction until full opacity
 });
 
-document.getElementById('power-1-button').addEventListener('click', () => {
+document.getElementById('power-2-button').addEventListener('click', () => {
   removeAllPipes();
 });

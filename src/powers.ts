@@ -2,7 +2,7 @@ import { updateMap } from './map';
 
 // For dealing with the powers elements
 const powersContainer = document.getElementById('powers-container');
-const power2Check = document.getElementById('power-2-check') as HTMLInputElement;
+const power3Check = document.getElementById('power-3-check') as HTMLInputElement;
 
 /** Classname */
 const INVISIBLE = 'invisible';
@@ -40,10 +40,10 @@ export function getPowerLevel() {
 
 /** Power 2: ability to retract dots */
 export function getPower2Checked() {
-  return power2Check.checked;
+  return power3Check.checked;
 }
 
-power2Check.addEventListener('change', () => {
+power3Check.addEventListener('change', () => {
   console.log('input changed');
   updateMap();
 });

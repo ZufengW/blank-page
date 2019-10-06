@@ -26,11 +26,19 @@ const MAP_SCHEMATIC = [
   '                                                                           ',
 ];
 
+/** Visibility of a tile */
+enum VIS {
+  HIDDEN,
+  FAINT,
+  QUESTION,
+  VISIBLE,
+}
+
 interface MapTile {
   /** Whether or not this tile is revealed to the player.
    * 0: not revealed; 1: question mark; 2: revealed
    */
-  revealed: 0|1|2;
+  revealed: VIS;
   /** The character currently occupying this tile. */
   char: string;
   /** Reference to the tile in the DOM. */
@@ -115,7 +123,7 @@ function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
 
   // Reveal the first part of the map: the first sentence
   for (let i = 3; i < 42; i++) {
-    map[4][i].revealed = 2;
+    map[4][i].revealed = VIS.VISIBLE;
   }
 
   return {map, beacons: b};
@@ -128,34 +136,57 @@ let starsCollected = 0;
 
 /** Updates the visibility of the entire map. */
 export function updateMap(): void {
-  // Reset the count in preparation for recounting.
+  // Reset the beacon counts in preparation for recounting.
   for (const group of Object.values(beacons)) {
     group.numActive = 0;
   }
 
   for (const row of gameMap) {
     for (const tile of row) {
-      if (!tile.revealed) {
+      // Check if any tiles need to be promoted in visibility.
+      if (tile.revealed === VIS.HIDDEN) {
         // Check if should be revealed? When next to a visible and active char
         if (hasVisibleNeighbour(tile)) {
           // Empty tiles and 0-beacons get fully revealed immediately.
           // Other non-empty tiles get ?
-          tile.revealed = (tile.char === ' ' || tile.char === '0') ? 2 : 1;
+          tile.revealed = (tile.char === ' ' || tile.char === '0')
+            ? VIS.VISIBLE
+            : VIS.QUESTION;
+        } else if (getPowerLevel() > 0 && hasVisibleNeighbour(tile, 2)) {
+          // With Perception +, may check distance 2
+          if (tile.char === ' ' || tile.char === '0') {
+            tile.revealed = VIS.VISIBLE;  // Reveal some tiles immediately.
+          } else {
+            tile.revealed = VIS.FAINT;
+            tile.span.classList.add('faint');
+          }
         }
+      } else if (tile.revealed === VIS.FAINT && hasVisibleNeighbour(tile)) {
+        // Go from faint to question or visible
+        tile.revealed = (tile.char === ' ' || tile.char === '0')
+          ? VIS.VISIBLE
+          : VIS.QUESTION;
+        tile.span.classList.remove('faint');
       }
-      if (tile.revealed === 0) {
+
+      // Update the appearance of the tiles
+      if (tile.revealed === VIS.HIDDEN) {
+        // Hidden tiles display as empty.
         tile.span.innerHTML = ' ';
-        continue;
-      } else if (tile.revealed === 1 && tile.char !== ' ') {
-        tile.span.innerHTML = '!';
+      } else if (tile.revealed === VIS.FAINT) {
+        // Unknown tiles display as '?'
+        tile.span.innerHTML = '?';
+      } else if (tile.revealed === VIS.QUESTION) {
+        // Unknown tiles display as '?'
+        tile.span.innerHTML = '?';
         tile.span.classList.add(INTERACTIVE);
-        continue;
-      }
-      // Tile is completely revealed.
-      updateSpan(tile);
-      // Count activated beacons. Only activated if has the char and neighbour.
-      if (tile.char.match(/\d/) && hasVisibleNeighbour(tile)) {
-        beacons[tile.char].numActive++;
+      } else {
+        // Revealed tiles display as normal.
+        updateSpan(tile);
+        // Count activated beacons. Only activated if has the char and neighbour.
+        if (tile.char.match(/\d/) && hasVisibleNeighbour(tile)) {
+          beacons[tile.char].numActive++;
+        }
       }
     }
   }
@@ -165,7 +196,7 @@ export function updateMap(): void {
 /** Updates just one span on the map. */
 function updateSpan(tile: MapTile) {
   tile.span.innerHTML = tile.char;
-  // If interactible, use different mouse hover.
+  // If interactable, use different mouse hover.
   if (isInteractive(tile)) {
     tile.span.classList.add(INTERACTIVE);
   } else {
@@ -179,7 +210,7 @@ function updateBeacons() {
   if (beacons[0].numActive > 0) {
     for (const group of beacons) {
       for (const tile of group.tiles) {
-        if (tile.revealed === 2 && tile.char.match(/\d/)) {
+        if (tile.revealed === VIS.VISIBLE && tile.char.match(/\d/)) {
           tile.span.classList.add(ANTI_BEACON);
           tile.span.classList.remove(LOW_BEACON, MED_BEACON, HIGH_BEACON);
         }
@@ -198,7 +229,7 @@ function updateBeacons() {
     // If entire group active, highlight them all.
     if (group.numActive === group.tiles.length) {
       for (const tile of group.tiles) {
-        if (tile.revealed === 2) {
+        if (tile.revealed === VIS.VISIBLE) {
           tile.span.classList.add(HIGH_BEACON);
           tile.span.classList.remove(LOW_BEACON, MED_BEACON, ANTI_BEACON);
         }
@@ -208,7 +239,7 @@ function updateBeacons() {
     // Otherwise highlight them depending on whether they are active
     for (const tile of group.tiles) {
       // Also need to check that the beacon is still there...
-      if (tile.revealed === 2 && tile.char === String(i)) {
+      if (tile.revealed === VIS.VISIBLE && tile.char === String(i)) {
         if (hasVisibleNeighbour(tile)) {
           tile.span.classList.add(MED_BEACON);
           tile.span.classList.remove(ANTI_BEACON, LOW_BEACON, HIGH_BEACON);
@@ -227,12 +258,13 @@ function updateBeacons() {
 /**
  * Returns whether or not at least one of the 4 neighbours
  * is visible and non-empty.
+ *
+ * @param dist distance from middle
  */
-function hasVisibleNeighbour(tile: MapTile): boolean {
-  const neighbours = getNeighboursAsArray(tile);
+function hasVisibleNeighbour(tile: MapTile, dist = 1): boolean {
+  const neighbours = getNeighboursAsArray(tile, dist);
   for (const n of neighbours) {
-    // Walls # don't count
-    if (n.revealed === 2 && n.char !== ' ') {
+    if (n.revealed === VIS.VISIBLE && n.char !== ' ') {
       return true;
     }
   }
@@ -250,8 +282,8 @@ function onSpanClick(row: number, col: number): void {
   const tile = gameMap[row][col];
   console.log('span clicked', row, col, tile);
 
-  if (tile.revealed === 1) {  // May click '?' to reveal it
-    tile.revealed = 2;
+  if (tile.revealed === VIS.QUESTION) {  // May click '?' to reveal it
+    tile.revealed = VIS.VISIBLE;
     updateMap();
     return;
   }
@@ -385,7 +417,7 @@ function onSpanClick(row: number, col: number): void {
 
 /** Checks if a char is interactive -- i.e. satisfies the conditions for interaction. */
 function isInteractive(tile: MapTile): boolean {
-  if (tile.char === ' ' || tile.revealed === 0) {
+  if (tile.char === ' ' || tile.revealed === VIS.HIDDEN || tile.revealed === VIS.FAINT) {
     return false;
   }
   if ((tile.char >= 'A' && tile.char <= 'Z') || (tile.char >= 'a' && tile.char <= 'z')) {
@@ -413,7 +445,7 @@ function isInteractive(tile: MapTile): boolean {
       c--;
     }
   }
-  if (tile.revealed === 1) {
+  if (tile.revealed === VIS.QUESTION) {
     return true;
   }
   if (tile.char === '+' ) {
@@ -507,12 +539,17 @@ function getNeighbours(tile: MapTile) {
   };
 }
 
-/** Get the neighbours of a map tile. Up to 4 f them. */
-function getNeighboursAsArray(tile: MapTile) {
-  const left = isInMapBounds(tile.row, tile.col - 1) ? gameMap[tile.row][tile.col - 1] : null;
-  const right = isInMapBounds(tile.row, tile.col + 1) ? gameMap[tile.row][tile.col + 1] : null;
-  const up = isInMapBounds(tile.row + 1, tile.col) ? gameMap[tile.row + 1][tile.col] : null;
-  const down = isInMapBounds(tile.row - 1, tile.col) ? gameMap[tile.row - 1][tile.col] : null;
+/**
+ * Get an array the neighbours of a map tile. Up to four of them.
+ *
+ * @param tile middle tile to get the neighbours of
+ * @param dist distance from the middle tile (default 1)
+ */
+function getNeighboursAsArray(tile: MapTile, dist = 1) {
+  const left = isInMapBounds(tile.row, tile.col - dist) ? gameMap[tile.row][tile.col - dist] : null;
+  const right = isInMapBounds(tile.row, tile.col + dist) ? gameMap[tile.row][tile.col + dist] : null;
+  const up = isInMapBounds(tile.row + dist, tile.col) ? gameMap[tile.row + dist][tile.col] : null;
+  const down = isInMapBounds(tile.row - dist, tile.col) ? gameMap[tile.row - dist][tile.col] : null;
   const arr: MapTile[] = [];
   if (left) { arr.push(left); }
   if (right) { arr.push(right); }
@@ -531,7 +568,7 @@ function destroyAndRevealBeacons(beaconNum: number): void {
   for (const row of gameMap) {
     for (const tile of row) {
       if (tile.char === toReveal) {
-        tile.revealed = 2;
+        tile.revealed = VIS.VISIBLE;
       } else if (tile.char === toDestroy) {
         tile.char = ' ';
       }
