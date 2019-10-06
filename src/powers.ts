@@ -1,3 +1,4 @@
+import { checkCompletion } from './loot';
 import { updateMap } from './map';
 
 // For dealing with the powers elements
@@ -9,6 +10,7 @@ const INVISIBLE = 'invisible';
 
 /** Power level required to use slider */
 export const SLIDER_POWER_REQUIREMENT = 4;
+export const MAX_POWER_LEVEL = 6;
 
 let powerLevel = 0;
 
@@ -34,6 +36,7 @@ export function setPowerLevel(newPowerLevel: number) {
       li.classList.remove(INVISIBLE);
     }
   }
+  checkCompletion();
 }
 
 /** Gets the current power level */

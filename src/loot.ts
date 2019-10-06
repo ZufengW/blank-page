@@ -1,7 +1,10 @@
+import { getPowerLevel, MAX_POWER_LEVEL } from './powers';
 
 let currencyCollected = 0;
 /** Index of next trophy. */
 let nextTrophy = 0;
+
+export const MAX_CURRENCY = 1000;
 
 const containerDiv = document.getElementById('trophy-container');
 const moneyDisplay = document.getElementById('money-display');
@@ -114,9 +117,10 @@ export function addCurrency() {
       nextTrophyPre.innerHTML = `\n\n\n Next: $${TROPHIES[nextTrophy].cost} \n\n\n`;
     } else {
       // No more trophies.
-      nextTrophyPre.innerHTML = `\n\n\n YOU \n WIN \n\n\n`;
+      nextTrophyPre.innerHTML = `\n\n\n FOUND \n THEM \n ALL \n\n\n`;
     }
   }
+  checkCompletion();
 }
 
 function trophyToHtml(design: string[]): HTMLPreElement {
@@ -124,4 +128,17 @@ function trophyToHtml(design: string[]): HTMLPreElement {
   pre.innerHTML = design.join('\n');
   pre.classList.add('trophy');
   return pre;
+}
+
+/** Check completionist: have max power level and all trophies */
+export function checkCompletion() {
+  if (getPowerLevel() === MAX_POWER_LEVEL
+    && currencyCollected === MAX_CURRENCY) {
+      const p = document.getElementById('completionist');
+      if (p.textContent.length > 0) {
+        return;
+      }
+      p.textContent = '100% Completion! You win! Thanks for playing.';
+      p.scrollIntoView({behavior: 'smooth'});
+  }
 }
