@@ -7,6 +7,9 @@ const power3Check = document.getElementById('power-3-check') as HTMLInputElement
 /** Classname */
 const INVISIBLE = 'invisible';
 
+/** Power level required to use slider */
+export const SLIDER_POWER_REQUIREMENT = 4;
+
 let powerLevel = 0;
 
 /** Sets the power level and updates the DOM elements. */

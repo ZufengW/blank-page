@@ -1,8 +1,8 @@
-import {getPower2Checked, getPowerLevel, setPowerLevel} from './powers';
+import {getPower2Checked, getPowerLevel, setPowerLevel, SLIDER_POWER_REQUIREMENT} from './powers';
 
 /** The world map. Everything starts hidden except for the first sentence. */
 const MAP_SCHEMATIC = [
-  '            0 4                                                            ',
+  '@           0 4                                                            ',
   '          4    #             0                .                            ',  // Leftmost needs to be blocked
   '               +              +          5 #                               ',  // Need . and slider to block middle +.
   '                                          0                                ',
@@ -137,13 +137,24 @@ function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
 initRenderMap(document.getElementById('game-pre') as HTMLPreElement);
 export const {map: gameMap, beacons} = setupMapPre();
 console.log(beacons);
-let starsCollected = 0;
+let starsCollected = 0;  // TODO: remove or replace with currency
+/** A reference to the current location of the slider */
+let sliderTile: MapTile = gameMap[0][0];
 
 /** Updates the visibility of the entire map. */
 export function updateMap(): void {
   // Reset the beacon counts in preparation for recounting.
   for (const group of Object.values(beacons)) {
     group.numActive = 0;
+  }
+
+  if (getPowerLevel() >= SLIDER_POWER_REQUIREMENT) {
+    // Initialise the slider.
+    sliderTile.revealed = VIS.VISIBLE;
+    sliderTile.span.classList.remove('faint');
+    sliderTile.span.classList.add('slider');
+    updateSlider();
+    updateSpan(sliderTile);
   }
 
   for (const row of gameMap) {
@@ -261,6 +272,60 @@ function updateBeacons() {
 }
 
 /**
+ * Update the tiles around the slider.
+ * Adds NSEW and makes neighbours visible.
+ */
+function updateSlider(): void {
+  const {left, right, up, down} = getNeighbours(sliderTile);
+  if (up && isClear(up)) {
+    up.span.innerHTML = up.char = 'N';
+    up.span.classList.add(INTERACTIVE);
+    up.revealed = VIS.VISIBLE;
+  }
+  if (down && isClear(down)) {
+    down.span.innerHTML = down.char = 'S';
+    down.span.classList.add(INTERACTIVE);
+    down.revealed = VIS.VISIBLE;
+  }
+  if (right && isClear(right)) {
+    right.span.innerHTML = right.char = 'E';
+    right.span.classList.add(INTERACTIVE);
+    right.revealed = VIS.VISIBLE;
+  }
+  if (left && isClear(left)) {
+    left.span.innerHTML = left.char = 'W';
+    left.span.classList.add(INTERACTIVE);
+    left.revealed = VIS.VISIBLE;
+  }
+}
+
+/** Changes the sliderTile to a new one. */
+function setSliderTile(newTile: MapTile): void {
+  // Updates styles on the old tile
+  sliderTile.span.classList.remove('slider');
+  sliderTile.char = ' ';
+
+  // Clear the directions
+  const {left, right, up, down} = getNeighbours(sliderTile);
+  if (up && up.char === 'N') {
+    up.char = ' ';
+  }
+  if (down && down.char === 'S') {
+    down.char = ' ';
+  }
+  if (right && right.char === 'E') {
+    right.char = ' ';
+  }
+  if (left && left.char === 'W') {
+    left.char = ' ';
+  }
+
+  newTile.span.classList.add('slider');
+  newTile.char = '@';
+  sliderTile = newTile;
+}
+
+/**
  * Returns whether or not at least one of the 4 neighbours
  * is visible and non-empty.
  *
@@ -269,7 +334,7 @@ function updateBeacons() {
 function hasVisibleNeighbour(tile: MapTile, dist = 1): boolean {
   const neighbours = getNeighboursAsArray(tile, dist);
   for (const n of neighbours) {
-    if (n.revealed === VIS.VISIBLE && n.char !== ' ') {
+    if (n.revealed === VIS.VISIBLE && !isClear(n)) {
       return true;
     }
   }
@@ -321,17 +386,13 @@ function onSpanClick(row: number, col: number): void {
     return updateMap();
   }
 
-  // Expands to the left as long as there is space at the end of the ...
   if (tile.char === '.') {
-    let r = 0;
+    const r = tile.row;
     let c = 0;
-    // Go left
-    r = tile.row;
-    c = tile.col - 1;
     if (getPower2Checked()) {
       c = tile.col;
       while (c >= 0) {
-        // If the tile on the left is not . or out of bounds, may retract.
+        // If the tile on the left (is not .) or (is out of bounds), may retract
         if (gameMap[r][c - 1].char !== '.' || c - 1 < 0) {
           gameMap[r][c].char = ' ';
           return updateMap();
@@ -339,8 +400,10 @@ function onSpanClick(row: number, col: number): void {
         c--;
       }
     }
+    // May expand to the left as long as there is space at the end of the ...
+    c = tile.col - 1;
     while (c >= 0) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         gameMap[r][c].char = '.';
         return updateMap();
       }
@@ -356,7 +419,7 @@ function onSpanClick(row: number, col: number): void {
     r = tile.row;
     c = tile.col - 1;
     while (c >= 0) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         gameMap[r][c].char = '-';
         break;
       }
@@ -366,7 +429,7 @@ function onSpanClick(row: number, col: number): void {
     // Go right
     c = tile.col + 1;
     while (c < MAP_COLS) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         gameMap[r][c].char = '-';
         break;
       }
@@ -377,7 +440,7 @@ function onSpanClick(row: number, col: number): void {
     r = tile.row - 1;
     c = tile.col;
     while (r >= 0) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         gameMap[r][c].char = '|';
         break;
       }
@@ -387,7 +450,7 @@ function onSpanClick(row: number, col: number): void {
     // Go down
     r = tile.row + 1;
     while (r < MAP_ROWS) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         gameMap[r][c].char = '|';
         break;
       }
@@ -412,10 +475,47 @@ function onSpanClick(row: number, col: number): void {
     updateMap();  // Can simply collect it.
     return;
   }
+  if (tile.char === 'N') {
+    // Move slider up until it hits something or runs out of space
+    let r = sliderTile.row - 1;
+    const c = sliderTile.col;
+    while (r >= 0 && isClear(gameMap[r][c])) { r--; }
+    setSliderTile(gameMap[r + 1][c]);
+    return updateMap();
+  }
+  if (tile.char === 'S') {
+    // Move slider down until it hits something or runs out of space
+    let r = sliderTile.row + 1;
+    const c = sliderTile.col;
+    while (r < MAP_ROWS && isClear(gameMap[r][c])) { r++; }
+    setSliderTile(gameMap[r - 1][c]);
+    return updateMap();
+  }
+  if (tile.char === 'E') {
+    // Move slider left until it hits something or runs out of space
+    const r = sliderTile.row;
+    let c = sliderTile.col + 1;
+    while (c < MAP_COLS && isClear(gameMap[r][c])) { c++; }
+    setSliderTile(gameMap[r][c - 1]);
+    return updateMap();
+  }
+  if (tile.char === 'W') {
+    // Move slider right until it hits something or runs out of space
+    const r = sliderTile.row;
+    let c = sliderTile.col - 1;
+    while (c >= 0 && isClear(gameMap[r][c])) { c--; }
+    setSliderTile(gameMap[r][c + 1]);
+    return updateMap();
+  }
 }
 
 /** Checks if a char is interactive -- i.e. satisfies the conditions for interaction. */
 function isInteractive(tile: MapTile): boolean {
+  // The slider's directions are interactive. (The slider itself isn't)
+  if (tile.char.match(/[NSEW]/)) {
+    return true;
+  }
+  // Other hidden and empty tiles are not interactive.
   if (tile.char === ' ' || tile.revealed === VIS.HIDDEN || tile.revealed === VIS.FAINT) {
     return false;
   }
@@ -435,7 +535,7 @@ function isInteractive(tile: MapTile): boolean {
     r = tile.row;
     c = tile.col - 1;
     while (c >= 0) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         return true;
       }
       if (gameMap[r][c].char !== '.') {
@@ -455,7 +555,7 @@ function isInteractive(tile: MapTile): boolean {
     r = tile.row;
     c = tile.col - 1;
     while (c >= 0) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         return true;
       }
       if (gameMap[r][c].char !== '-') {
@@ -466,7 +566,7 @@ function isInteractive(tile: MapTile): boolean {
     // Go right
     c = tile.col + 1;
     while (c < MAP_COLS) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         return true;
       }
       if (gameMap[r][c].char !== '-') {
@@ -478,7 +578,7 @@ function isInteractive(tile: MapTile): boolean {
     r = tile.row - 1;
     c = tile.col;
     while (r >= 0) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         return true;
       }
       if (gameMap[r][c].char !== '|') {
@@ -489,7 +589,7 @@ function isInteractive(tile: MapTile): boolean {
     // Go down
     r = tile.row + 1;
     while (r < MAP_ROWS) {
-      if (gameMap[r][c].char === ' ') {
+      if (isClear(gameMap[r][c])) {
         return true;
       }
       if (gameMap[r][c].char !== '|') {
@@ -522,17 +622,17 @@ function isInMapBounds(r: number, c: number) {
   return true;
 }
 
-// Checks if a coordinate on the map is clear
-function isClear(r: number, c: number) {
-  return coordsContainsChar(r, c, ' ');
+/** Checks if a tile on the map is clear of obstacles */
+function isClear(tile: MapTile) {
+  return (tile.char.match(/[ NSEW]/));
 }
 
 /** Get the neighbours of a map tile as an object. 4 of them, maybe null. */
 function getNeighbours(tile: MapTile) {
   const left = isInMapBounds(tile.row, tile.col - 1) ? gameMap[tile.row][tile.col - 1] : null;
   const right = isInMapBounds(tile.row, tile.col + 1) ? gameMap[tile.row][tile.col + 1] : null;
-  const up = isInMapBounds(tile.row + 1, tile.col) ? gameMap[tile.row + 1][tile.col] : null;
-  const down = isInMapBounds(tile.row - 1, tile.col) ? gameMap[tile.row - 1][tile.col] : null;
+  const down = isInMapBounds(tile.row + 1, tile.col) ? gameMap[tile.row + 1][tile.col] : null;
+  const up = isInMapBounds(tile.row - 1, tile.col) ? gameMap[tile.row - 1][tile.col] : null;
   return {
     left, right, up, down,
   };
@@ -547,8 +647,8 @@ function getNeighbours(tile: MapTile) {
 function getNeighboursAsArray(tile: MapTile, dist = 1) {
   const left = isInMapBounds(tile.row, tile.col - dist) ? gameMap[tile.row][tile.col - dist] : null;
   const right = isInMapBounds(tile.row, tile.col + dist) ? gameMap[tile.row][tile.col + dist] : null;
-  const up = isInMapBounds(tile.row + dist, tile.col) ? gameMap[tile.row + dist][tile.col] : null;
-  const down = isInMapBounds(tile.row - dist, tile.col) ? gameMap[tile.row - dist][tile.col] : null;
+  const down = isInMapBounds(tile.row + dist, tile.col) ? gameMap[tile.row + dist][tile.col] : null;
+  const up = isInMapBounds(tile.row - dist, tile.col) ? gameMap[tile.row - dist][tile.col] : null;
   const arr: MapTile[] = [];
   if (left) { arr.push(left); }
   if (right) { arr.push(right); }
