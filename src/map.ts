@@ -1,8 +1,9 @@
+import { addCurrency } from './loot';
 import {getPower2Checked, getPowerLevel, setPowerLevel, SLIDER_POWER_REQUIREMENT} from './powers';
 
 /** The world map. Everything starts hidden except for the first sentence. */
 const MAP_SCHEMATIC = [
-  '@           0 4                              # ## + 5 ',  // Only the slider should be able to reach this 5
+  '@           0 4                              #  $ + 5 ',  // Only the slider should be able to reach this 5
   '          4    #             0          .     ## #   #',  // Leftmost needs to be blocked
   '               +              +          6 $ #      # ',  // Need . and slider to block middle + while it extends to 5.
   '                                          0  #        ',
@@ -16,14 +17,14 @@ const MAP_SCHEMATIC = [
   '            #     +   #                           #   ',
   '  #     # 4    +    #  #    5                         ',
   '            0 #    2                      $ #        #',
-  '          #      +      # # 6 ### #### ##        # # #',
+  '          #      +      # # 6 ### #$## ##        # # #',
   '     # $ #        #   3  # # #   0    #  # $ ####   6 ',
-  '           #     # # #  #   #                     #   ',
-  '       #        3 # $ ##     +        #    +          ',
+  '           #     # # #  #   #                     $   ',
+  '       #        3 $ $ ##     +        #    +          ',
   ' #             # #   0   +     #                    6 ',
   '5 #####  # #### #                +    6   #           ',
   '           #         +       0                  ## $  ',
-  '#6      +   5 0 #     #    #           #              ',
+  '# 6     +   5 0 #     #    #           #              ',
 ];
 
 /** Visibility of a tile */
@@ -102,6 +103,9 @@ function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
     {tiles: [], numActive: 0},
   ];
 
+  // Also make a count of how many $
+  let numMoney = 0;
+
   for (let r = 0; r < MAP_ROWS; r++) {
     const mapRow: MapTile[] = [];
     for (let c = 0; c < MAP_COLS; c++) {
@@ -114,6 +118,8 @@ function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
         col: c,
       };
       mapRow.push(mapTile);
+
+      if (mapTile.char === '$') { numMoney++; }
 
       span.onclick = () => {
         onSpanClick(r, c);
@@ -132,13 +138,14 @@ function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
     map[4][i].revealed = VIS.VISIBLE;
   }
 
+  console.log('total money present', numMoney);
+
   return {map, beacons: b};
 }
 
 initRenderMap(document.getElementById('game-pre') as HTMLPreElement);
 export const {map: gameMap, beacons} = setupMapPre();
 console.log(beacons);
-let starsCollected = 0;  // TODO: remove or replace with currency
 /** A reference to the current location of the slider */
 let sliderTile: MapTile = gameMap[0][0];
 
@@ -472,11 +479,11 @@ function onSpanClick(row: number, col: number): void {
     }
     return updateMap();
   }
-  if (tile.char === '*' ) {
-    starsCollected++; console.log('Collected a star', starsCollected);
-    tile.char = ' ';
-    updateMap();  // Can simply collect it.
-    return;
+  // Currency gets replaced with wall when collected.
+  if (tile.char === '$' ) {
+    addCurrency();
+    tile.char = '#';
+    return updateMap();
   }
   if (tile.char === 'N') {
     // Move slider up until it hits something or runs out of space
@@ -548,6 +555,9 @@ function isInteractive(tile: MapTile): boolean {
     }
   }
   if (tile.revealed === VIS.QUESTION) {
+    return true;
+  }
+  if (tile.char === '$') {
     return true;
   }
   if (tile.char === '+' ) {
