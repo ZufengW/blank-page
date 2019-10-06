@@ -50,6 +50,5 @@ export function getPower2Checked() {
 }
 
 power3Check.addEventListener('change', () => {
-  console.log('input changed');
   updateMap();
 });

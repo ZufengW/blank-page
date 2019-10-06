@@ -1,4 +1,4 @@
-import { addCurrency } from './loot';
+import { addCurrency, MAX_CURRENCY } from './loot';
 import {getPower2Checked, getPowerLevel, setPowerLevel, SLIDER_POWER_REQUIREMENT} from './powers';
 
 /** The world map. Everything starts hidden except for the first sentence. */
@@ -138,14 +138,16 @@ function setupMapPre(): {map: MapTile[][], beacons: BeaconsType} {
     map[4][i].revealed = VIS.VISIBLE;
   }
 
-  console.log('total money present', numMoney);
+  // Sanity check
+  if (numMoney * 100 !== MAX_CURRENCY) {
+    console.error('Money mismatch', numMoney, MAX_CURRENCY);
+  }
 
   return {map, beacons: b};
 }
 
 initRenderMap(document.getElementById('game-pre') as HTMLPreElement);
 export const {map: gameMap, beacons} = setupMapPre();
-console.log(beacons);
 /** A reference to the current location of the slider */
 let sliderTile: MapTile = gameMap[0][0];
 
@@ -359,7 +361,6 @@ function hasVisibleNeighbour(tile: MapTile, dist = 1): boolean {
  */
 function onSpanClick(row: number, col: number): void {
   const tile = gameMap[row][col];
-  console.log('span clicked', row, col, tile);
 
   if (tile.revealed === VIS.QUESTION) {  // May click '?' to reveal it
     tile.revealed = VIS.VISIBLE;
@@ -472,7 +473,6 @@ function onSpanClick(row: number, col: number): void {
   if (tile.char.match(BEACON_MATCHER)) {
     if (tile.span.classList.contains(HIGH_BEACON)) {
       const numBeaconsActive = parseInt(tile.char, 10);
-      console.log('Activate beacon', tile.char);
       setPowerLevel(numBeaconsActive);
       destroyAndRevealBeacons(numBeaconsActive);
     }

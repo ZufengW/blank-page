@@ -1,12 +1,7 @@
-import { gameMap, removeAllPipes, setGameInteractable, updateMap } from './map';
-
-console.log('hello world');
+import { removeAllPipes, setGameInteractable, updateMap } from './map';
 
 const mapPre = document.getElementById('game-pre') as HTMLPreElement;
 mapPre.style.opacity = '0';
-console.log(mapPre);
-
-console.log(gameMap);
 updateMap();
 
 // Page starts blank
