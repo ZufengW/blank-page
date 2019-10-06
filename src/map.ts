@@ -226,11 +226,11 @@ function updateBeacons() {
 
   for (let i = 1; i < beacons.length; i++) {
     const group = beacons[i];
-    // If entire group active, highlight them all.
+    // If entire group active, highlight them all and make active.
     if (group.numActive === group.tiles.length) {
       for (const tile of group.tiles) {
         if (tile.revealed === VIS.VISIBLE) {
-          tile.span.classList.add(HIGH_BEACON);
+          tile.span.classList.add(HIGH_BEACON, INTERACTIVE);
           tile.span.classList.remove(LOW_BEACON, MED_BEACON, ANTI_BEACON);
         }
       }
@@ -501,7 +501,7 @@ function isInteractive(tile: MapTile): boolean {
     return false;
   }
   if (tile.char.match(/\d/)) {
-    // Works if has any non-empty neighbours.
+    // See logic in: updateBeacons
     return (tile.span.classList.contains(HIGH_BEACON));
   }
   return false;
