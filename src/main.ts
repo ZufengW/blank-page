@@ -1,24 +1,31 @@
-import { gameMap, removeAllPipes, updateMap } from './map';
+import { gameMap, removeAllPipes, setGameInteractable, updateMap } from './map';
 
 console.log('hello world');
 
 const mapPre = document.getElementById('game-pre') as HTMLPreElement;
-mapPre.style.opacity = '0.5';  // TODO: change to 0
+mapPre.style.opacity = '0';
 console.log(mapPre);
 
 console.log(gameMap);
 updateMap();
 
 // Page starts blank
-let pageOpacity = 0.5;
-document.addEventListener('click', () => {
-  if (pageOpacity < 1) {
-    pageOpacity += 0.1;
+let pageOpacityMultipler = 0;
+document.addEventListener('click', handleClick);
+
+function handleClick() {
+  // Increase opacity until 1, then remove the event
+  pageOpacityMultipler += 1;
+  if (pageOpacityMultipler < 10) {
+    // Not using floats here due to floating point imprecision
+    mapPre.style.opacity = `.${pageOpacityMultipler}`;
+  } else {
+    mapPre.style.opacity = '1';
+    document.removeEventListener('click', handleClick);
+    setGameInteractable(true);
+    updateMap();
   }
-  mapPre.style.opacity = String(pageOpacity);
-  // Optionally remove the listener when reached 1
-  // TODO: disallow interaction until full opacity
-});
+}
 
 document.getElementById('power-2-button').addEventListener('click', () => {
   removeAllPipes();

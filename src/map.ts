@@ -7,7 +7,7 @@ const MAP_SCHEMATIC = [
   '          4    #             0          .     ## #   #',  // Leftmost needs to be blocked
   '               +              +          6 $ #      # ',  // Need . and slider to block middle + while it extends to 5.
   '                                          0  #        ',
-  '# + This.page is intentionally left blank.            ',  // Need to get slider to below the 0.
+  '# + This page is intentionally left blank.            ',  // Need to get slider to below the 0.
   '                                              #       ',
   '4          +                 +            +    5      ',  // Leftmost +: need up 2, down 3. Extend 3 more.
   '               # #          ##                        ',
@@ -374,10 +374,9 @@ function onSpanClick(row: number, col: number): void {
   if (getPowerLevel() < 1 && tile.char.match(WORD_MATCHER)) {
     // To be less tedious, also removes contiguous lowercase characters.
     tile.char = ' ';
-    let r = 0;
+    const r = tile.row;
     let c = 0;
     // Go left
-    r = tile.row;
     c = tile.col - 1;
     while (c >= 0) {
       const currTile = gameMap[r][c];
@@ -521,6 +520,9 @@ function onSpanClick(row: number, col: number): void {
 
 /** Checks if a char is interactive -- i.e. satisfies the conditions for interaction. */
 function isInteractive(tile: MapTile): boolean {
+  if (!isGameInteractable) {
+    return false;
+  }
   // The slider's directions are interactive. (The slider itself isn't)
   if (tile.char.match(/[NSEW]/)) {
     return true;
@@ -703,4 +705,10 @@ export function removeAllPipes(): void {
     }
   }
   updateMap();
+}
+
+let isGameInteractable = false;
+/** Master switch to control if the pre can be interacted with. */
+export function setGameInteractable(value: boolean) {
+  isGameInteractable = value;
 }
