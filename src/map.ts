@@ -2,25 +2,25 @@ import {getPower2Checked, getPowerLevel, setPowerLevel} from './powers';
 
 /** The world map. Everything starts hidden except for the first sentence. */
 const MAP_SCHEMATIC = [
-  '            0 3                                                            ',
-  '          3    #             0                .                            ',  // Leftmost needs to be blocked
-  '               +              +          4 #                               ',  // Need . and slider to block middle +.
+  '            0 4                                                            ',
+  '          4    #             0                .                            ',  // Leftmost needs to be blocked
+  '               +              +          5 #                               ',  // Need . and slider to block middle +.
   '                                          0                                ',
   '# + This.page is intentionally left blank. #   #                          #',
   '                                                                           ',
-  '$          +                 +            +                                ',  // Leftmost +: need up 2, down 3. Extend 3 more.
+  '4          +                 +            +                                ',  // Leftmost +: need up 2, down 3. Extend 3 more.
   '               #                                                           ',
-  '# +           +   #   #     #                  #                           ',  // Leftmost +: must reset to get the 2. 2nd: must expand exactly 2
+  '# +     1     +   #   #     #                  #                           ',  // 2nd +: must expand exactly twice to reach 4.
   '                                              #                            ',
-  '2            .                                                             ',
+  '3      2     .                                                             ',
   '            #     +   #                                                    ',
-  '  #       3  # +    #       ###                                            ',
-  '            0 #    1                                                       ',
+  '  #     # 4    +    #       ###                                            ',
+  '            0 #    2                                                       ',
   '          #      +                                                         ',
-  '     # $ #     #  #   2                                                    ',
+  '     # $ #        #   3                                                    ',
   '           #     #                                                         ',
-  '       #                                                                   ',
-  '                                                                           ',
+  '       #        3                                                          ',
+  '               #                                                           ',
   '                                                                           ',
   '                                                                           ',
   '                                                                           ',
@@ -569,6 +569,7 @@ function destroyAndRevealBeacons(beaconNum: number): void {
     for (const tile of row) {
       if (tile.char === toReveal) {
         tile.revealed = VIS.VISIBLE;
+        tile.span.classList.remove('faint');
       } else if (tile.char === toDestroy) {
         tile.char = ' ';
       }
