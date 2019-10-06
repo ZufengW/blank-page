@@ -4,7 +4,7 @@ import {getPower2Checked, getPowerLevel, setPowerLevel, SLIDER_POWER_REQUIREMENT
 const MAP_SCHEMATIC = [
   '@           0 4                              # ## + 5 ',  // Only the slider should be able to reach this 5
   '          4    #             0          .     ## #   #',  // Leftmost needs to be blocked
-  '               +              +          6 # #      # ',  // Need . and slider to block middle + while it extends to 5.
+  '               +              +          6 $ #      # ',  // Need . and slider to block middle + while it extends to 5.
   '                                          0  #        ',
   '# + This.page is intentionally left blank.            ',  // Need to get slider to below the 0.
   '                                              #       ',
@@ -15,15 +15,15 @@ const MAP_SCHEMATIC = [
   '3      2     .                                       #',
   '            #     +   #                           #   ',
   '  #     # 4    +    #  #    5                         ',
-  '            0 #    2                      # #        #',
-  '          #      +      # # 6 ###########        # # #',
-  '     # $ #        #   3  # # #           ########   6 ',
-  '           #     # # #  #                             ',
-  '       #        3 # # ##                              ',
-  ' #             # #                                    ',
-  '5 #####  # #### #                                     ',
-  '           #                                          ',
-  '#6      +   5 0                                       ',  // Only the slider can enter. 5 is gateway.
+  '            0 #    2                      $ #        #',
+  '          #      +      # # 6 ### #### ##        # # #',
+  '     # $ #        #   3  # # #   0    #  # $ ####   6 ',
+  '           #     # # #  #   #                     #   ',
+  '       #        3 # $ ##     +        #    +          ',
+  ' #             # #   0   +     #                    6 ',
+  '5 #####  # #### #                +    6   #           ',
+  '           #         +       0                  ## $  ',
+  '#6      +   5 0 #     #    #           #              ',
 ];
 
 /** Visibility of a tile */
