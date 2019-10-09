@@ -402,8 +402,8 @@ function onSpanClick(row: number, col: number): void {
     if (getPower2Checked()) {
       c = tile.col;
       while (c >= 0) {
-        // If the tile on the left (is not .) or (is out of bounds), may retract
-        if (gameMap[r][c - 1].char !== '.' || c - 1 < 0) {
+        // If the tile on the left is not '.' (including out of bounds), may retract
+        if (c - 1 < 0 || gameMap[r][c - 1].char !== '.') {
           gameMap[r][c].char = ' ';
           return updateMap();
         }
